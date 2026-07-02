@@ -369,5 +369,6 @@ export default function App() {
     );
   }
 
+  
   return <LandingPage onNavigate={navigateTo} />;
 }
