@@ -235,7 +235,7 @@ export function OverviewTab({
           ) : (
             recentOrders.map((order) => (
               <div key={order.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/30 transition">
-                <div className="space-y-1">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-sm text-gray-800">{order.customerName}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -247,9 +247,18 @@ export function OverviewTab({
                     </span>
                   </div>
                   
-                  {/* Item descriptions */}
-                  <div className="text-xs text-gray-500 line-clamp-1">
-                    {order.items.map((oi) => `${oi.itemName} × ${oi.quantity}`).join(', ')}
+                  {/* Itemized breakdown with prices */}
+                  <div className="bg-slate-50 p-2.5 rounded-lg space-y-1 border border-slate-100/50">
+                    {order.items.map((oi) => (
+                      <div key={oi.id} className="flex items-center justify-between text-[11px] text-gray-700">
+                        <span className="font-semibold">{oi.itemName} <span className="text-gray-400">×{oi.quantity}</span></span>
+                        <span className="font-mono text-gray-600">₹{oi.itemPrice * oi.quantity}</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between font-bold text-xs text-gray-900">
+                      <span>Total:</span>
+                      <span className="font-mono text-[#FD7979]">₹{order.totalAmount}</span>
+                    </div>
                   </div>
 
                   <span className="text-[10px] text-gray-400 block font-mono">
@@ -257,8 +266,7 @@ export function OverviewTab({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-dashed border-slate-100">
-                  <span className="font-mono font-bold text-sm text-gray-900">₹{order.totalAmount}</span>
+                <div className="flex items-start justify-end sm:items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-dashed border-slate-100">
                   
                   <div className="flex items-center gap-1.5">
                     {order.status === 'pending' && (

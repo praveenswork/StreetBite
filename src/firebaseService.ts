@@ -276,6 +276,7 @@ export async function placeOrderForVendor(vendorId: string, payload: { customerN
   const menuSnapshot = await getDocs(collection(db, 'vendors', vendorId, 'menuItems'));
   const menuItemsById = new Map(menuSnapshot.docs.map((itemDoc) => [itemDoc.id, toMenuItem(itemDoc.data(), itemDoc.id)]));
 
+  // Build order items with ONLY order-related data (no inventory mixing)
   const orderItems = payload.items.map((item) => {
     const menuItem = menuItemsById.get(item.id);
     const itemPrice = Number(menuItem?.price ?? item.price ?? 0);
@@ -284,11 +285,12 @@ export async function placeOrderForVendor(vendorId: string, payload: { customerN
       menuItemId: item.id,
       itemName: menuItem?.name ?? item.name ?? 'Unknown item',
       itemPrice,
-      quantity: item.quantity,
+      quantity: Number(item.quantity),
     };
   });
 
   const totalAmount = orderItems.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+  
   const orderRef = await addDoc(collection(db, 'vendors', vendorId, 'orders'), {
     vendorId,
     customerName: payload.customerName,
@@ -305,6 +307,7 @@ export async function placeOrderForVendor(vendorId: string, payload: { customerN
     customerName: payload.customerName,
     totalAmount,
     prepTimeMinutes: Math.max(8, payload.items.length * 4 + 6),
-    ...snapshot.data(),
+    status: 'pending',
+    items: orderItems.map(oi => ({ ...oi, orderId: orderRef.id })),
   };
 }

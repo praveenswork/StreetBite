@@ -127,16 +127,16 @@ export function OrdersTab({ orders, onMarkReady, onMarkPaid, playBeep }: OrdersT
             return (
               <div 
                 key={order.id} 
-                className={`bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 hover:border-red-100 transition duration-200 relative overflow-hidden ${
+                className={`bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 hover:border-red-100 transition duration-200 relative overflow-hidden ${
                   order.status === 'pending' ? 'border-l-4 border-l-amber-400' :
                   order.status === 'ready' ? 'border-l-4 border-l-blue-400' :
                   'border-l-4 border-l-emerald-400'
                 }`}
                 id={`order-card-${order.id}`}
               >
-                {/* ID & Header line info */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-50 pb-3">
-                  <div className="space-y-0.5">
+                {/* Header with Total Amount prominently displayed */}
+                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-50 pb-3">
+                  <div className="space-y-0.5 flex-1">
                     <div className="flex items-center gap-1.5">
                       <h4 className="font-heading font-bold text-base text-gray-800">{order.customerName}</h4>
                       <span className="text-[10px] bg-slate-100 border border-slate-200 font-mono text-gray-400 px-1.5 py-0.5 rounded">
@@ -154,7 +154,15 @@ export function OrdersTab({ orders, onMarkReady, onMarkPaid, playBeep }: OrdersT
                     </div>
                   </div>
 
-                  {/* High contrast Status indicator */}
+                  {/* Total Amount badge - PROMINENT */}
+                  <div className="text-right">
+                    <div className="text-[10px] text-gray-400 font-mono mb-0.5">Bill Total</div>
+                    <div className="text-lg font-extrabold font-mono text-[#FD7979] bg-red-50 px-3 py-1.5 rounded-lg border border-red-100/50">₹{order.totalAmount}</div>
+                  </div>
+                </div>
+
+                {/* High contrast Status indicator */}
+                <div className="flex items-center justify-between">
                   <span className={`text-[10px] font-extrabold font-mono px-2.5 py-1 rounded-full uppercase ${
                     order.status === 'pending' ? 'bg-amber-50 text-amber-600 border border-amber-200/50' :
                     order.status === 'ready' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
@@ -183,37 +191,34 @@ export function OrdersTab({ orders, onMarkReady, onMarkPaid, playBeep }: OrdersT
                 </div>
 
                 {/* Cashier sum & actions panel */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-slate-50">
-                  <div className="text-xs text-gray-400 font-mono">
-                    Total Revenue Amount: <span className="text-sm font-bold text-gray-900 font-stats pl-1">₹{order.totalAmount}</span>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-50">
 
                   {/* Transition actions */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     {order.status === 'pending' && (
                       <button
                         onClick={() => onMarkReady(order.id)}
-                        className="w-full sm:w-auto cursor-pointer bg-[#FD7979] hover:bg-[#eb6767] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition duration-150 shadow-sm"
+                        className="flex-1 sm:flex-none cursor-pointer bg-[#FD7979] hover:bg-[#eb6767] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition duration-150 shadow-sm"
                       >
                         <ChefHat className="w-3.5 h-3.5" />
-                        <span>Done (Mark Ready)</span>
+                        <span>Mark Ready</span>
                       </button>
                     )}
 
                     {order.status === 'ready' && (
                       <button
                         onClick={() => onMarkPaid(order.id)}
-                        className="w-full sm:w-auto cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition duration-150 shadow-sm"
+                        className="flex-1 sm:flex-none cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition duration-150 shadow-sm"
                       >
                         <Coins className="w-3.5 h-3.5" />
-                        <span>Collected (Mark Paid)</span>
+                        <span>Mark Paid</span>
                       </button>
                     )}
 
                     {order.status === 'paid' && (
-                      <div className="w-full sm:w-auto text-emerald-600 font-semibold text-xs flex items-center justify-center gap-1 bg-emerald-50 px-3 py-2 rounded-xl">
+                      <div className="flex-1 sm:flex-none text-emerald-600 font-semibold text-xs flex items-center justify-center gap-1 bg-emerald-50 px-3 py-2 rounded-xl">
                         <CheckCircle className="w-4 h-4" />
-                        <span>Paid & Archived safely</span>
+                        <span>Resolved</span>
                       </div>
                     )}
                   </div>
