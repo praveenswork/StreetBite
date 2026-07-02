@@ -197,7 +197,9 @@ export function InventoryTab({
                             <span className={`font-mono font-bold text-sm min-w-[30px] text-center ${isLowStock ? 'text-amber-600 text-base font-extrabold flex items-center justify-center gap-1' : 'text-gray-900'}`}>
                               {row.currentStock}
                               {isLowStock && (
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="Low Stock alarm!" />
+                                <span title="Low Stock alarm!">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                </span>
                               )}
                             </span>
 

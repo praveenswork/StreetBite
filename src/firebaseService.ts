@@ -70,13 +70,24 @@ function toInventoryItem(document: DocumentData, id: string): InventoryItem {
 }
 
 function toOrder(document: DocumentData, id: string): Order {
+  const rawItems = Array.isArray(document.items) ? document.items : [];
+  const normalizedItems = rawItems.map((item: any, index: number) => ({
+    id: item?.id ?? `${id}-${index}`,
+    orderId: id,
+    menuItemId: item?.menuItemId ?? item?.id ?? '',
+    itemName: item?.itemName ?? item?.name ?? 'Unknown item',
+    itemPrice: Number(item?.itemPrice ?? item?.price ?? 0),
+    quantity: Number(item?.quantity ?? 0),
+  }));
+  const derivedTotal = normalizedItems.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+
   return {
     id,
     vendorId: document.vendorId ?? '',
     customerName: document.customerName ?? '',
-    totalAmount: Number(document.totalAmount ?? 0),
+    totalAmount: Number(document.totalAmount ?? (derivedTotal > 0 ? derivedTotal : 0)),
     status: document.status ?? 'pending',
-    items: document.items ?? [],
+    items: normalizedItems,
     createdAt: document.createdAt ?? new Date().toISOString(),
     updatedAt: document.updatedAt ?? new Date().toISOString(),
   };
@@ -261,17 +272,29 @@ export async function getPublicVendorBySlug(slug: string) {
   return { vendor, menuItems };
 }
 
-export async function placeOrderForVendor(vendorId: string, payload: { customerName: string; items: Array<{ id: string; quantity: number }> }) {
-  const totalAmount = payload.items.reduce((sum, item) => sum + item.quantity * 50, 0);
+export async function placeOrderForVendor(vendorId: string, payload: { customerName: string; items: Array<{ id: string; quantity: number; price?: number; name?: string }> }) {
+  const menuSnapshot = await getDocs(collection(db, 'vendors', vendorId, 'menuItems'));
+  const menuItemsById = new Map(menuSnapshot.docs.map((itemDoc) => [itemDoc.id, toMenuItem(itemDoc.data(), itemDoc.id)]));
+
+  const orderItems = payload.items.map((item) => {
+    const menuItem = menuItemsById.get(item.id);
+    const itemPrice = Number(menuItem?.price ?? item.price ?? 0);
+    return {
+      id: item.id,
+      menuItemId: item.id,
+      itemName: menuItem?.name ?? item.name ?? 'Unknown item',
+      itemPrice,
+      quantity: item.quantity,
+    };
+  });
+
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
   const orderRef = await addDoc(collection(db, 'vendors', vendorId, 'orders'), {
     vendorId,
     customerName: payload.customerName,
     totalAmount,
     status: 'pending',
-    items: payload.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-    })),
+    items: orderItems,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });

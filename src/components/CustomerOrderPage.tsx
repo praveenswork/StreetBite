@@ -94,7 +94,7 @@ export function CustomerOrderPage({ slug, onNavigateHome }: CustomerOrderPagePro
       setIsSubmitting(true);
       const result = await placeOrderForVendor(vendorData.id, {
         customerName: customerName.trim(),
-        items: cartSummary.itemsList.map((item) => ({ id: item.id, quantity: item.quantity })),
+        items: cartSummary.itemsList.map((item) => ({ id: item.id, quantity: item.quantity, price: item.price, name: item.name })),
       });
       setPlacedOrder(result);
       setCartQuantities({});

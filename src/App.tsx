@@ -33,6 +33,36 @@ import {
 } from './firebaseService';
 import { analyticsPromise } from './firebase';
 
+function normalizeOrders(orders: Order[], menuItems: MenuItem[]): Order[] {
+  const menuLookup = new Map(menuItems.map((item) => [item.id, item]));
+
+  return orders.map((order, index) => {
+    const items = (order.items ?? []).map((item, itemIndex) => {
+      const menuItem = menuLookup.get(item.menuItemId || item.id);
+      const itemPrice = Number(item.itemPrice ?? menuItem?.price ?? 0);
+      const itemName = item.itemName || menuItem?.name || 'Unknown item';
+
+      return {
+        ...item,
+        id: item.id || `${order.id}-${itemIndex}`,
+        orderId: order.id,
+        menuItemId: item.menuItemId || item.id || '',
+        itemName,
+        itemPrice,
+        quantity: Number(item.quantity ?? 0),
+      };
+    });
+
+    const computedTotal = items.reduce((sum, item) => sum + item.itemPrice * item.quantity, 0);
+
+    return {
+      ...order,
+      items,
+      totalAmount: Number(order.totalAmount ?? 0) > 0 ? Number(order.totalAmount ?? 0) : computedTotal,
+    };
+  });
+}
+
 export default function App() {
   const [route, setRoute] = React.useState<any>(() => parseCurrentUrl());
   const [vendor, setVendor] = React.useState<Vendor | null>(null);
@@ -42,6 +72,7 @@ export default function App() {
   const [menuItems, setMenuItems] = React.useState<MenuItem[]>([]);
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
   const previousOrdersRef = React.useRef<Order[]>([]);
+  const normalizedOrders = React.useMemo(() => normalizeOrders(orders, menuItems), [orders, menuItems]);
 
   const playNotificationBeep = React.useCallback(() => {
     try {
@@ -163,12 +194,12 @@ export default function App() {
   React.useEffect(() => {
     if (!isAuthenticated || !vendor?.id) return;
 
-    const newOrders = orders.filter((order) => !previousOrdersRef.current.some((prev) => prev.id === order.id));
+    const newOrders = normalizedOrders.filter((order) => !previousOrdersRef.current.some((prev) => prev.id === order.id));
     if (newOrders.length > 0) {
       playNotificationBeep();
     }
-    previousOrdersRef.current = orders;
-  }, [orders, isAuthenticated, vendor?.id, playNotificationBeep]);
+    previousOrdersRef.current = normalizedOrders;
+  }, [normalizedOrders, isAuthenticated, vendor?.id, playNotificationBeep]);
 
   const navigateTo = (navTarget: string) => {
     window.location.hash = navTarget.replace(/^#/, '');
@@ -317,7 +348,7 @@ export default function App() {
       >
         {currentTab === 'home' && (
           <OverviewTab
-            orders={orders}
+            orders={normalizedOrders}
             menuItems={menuItems}
             inventory={inventory}
             onTabChange={(tabName) => navigateTo(`#/dashboard/${tabName}`)}
@@ -328,7 +359,7 @@ export default function App() {
 
         {currentTab === 'orders' && (
           <OrdersTab
-            orders={orders}
+            orders={normalizedOrders}
             onMarkReady={(oid) => handleTransitionOrderStatus(oid, 'ready')}
             onMarkPaid={(oid) => handleTransitionOrderStatus(oid, 'paid')}
             playBeep={playNotificationBeep}
@@ -355,7 +386,7 @@ export default function App() {
         )}
 
         {currentTab === 'reports' && (
-          <ReportsTab orders={orders} menuItems={menuItems} />
+          <ReportsTab orders={normalizedOrders} menuItems={menuItems} />
         )}
 
         {currentTab === 'settings' && (
